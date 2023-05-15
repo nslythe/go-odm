@@ -1,2 +1,2 @@
-# go-odm
+# goodm
 go mongo object data modeling
