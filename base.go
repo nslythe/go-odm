@@ -103,6 +103,18 @@ func (obj DataObject) Index(i int) DataObject {
 	return *create_DataObject_from_reflect(obj.obj_value.Index(i).Type(), obj.obj_value.Index(i))
 }
 
+func (obj DataObject) Clear() {
+	if obj.sub_obj != nil && obj.sub_obj.obj_value.IsValid() {
+		obj.sub_obj.Clear()
+	} else {
+		if !obj.IsSlice() {
+			panic("No a slice")
+		}
+
+		obj.obj_value.Set(reflect.MakeSlice(obj.obj_type, 0, 0))
+	}
+}
+
 func (obj DataObject) Append(val DataObject) {
 	if obj.sub_obj != nil && obj.sub_obj.obj_value.IsValid() {
 		obj.sub_obj.Append(val)

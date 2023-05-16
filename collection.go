@@ -87,6 +87,8 @@ func (coll CollectionStruct) Find(obj interface{}, filter primitive.M) error {
 	}
 	defer cursor.Close(context.TODO())
 
+	Obj(obj).Clear()
+
 	for cursor.Next(context.Background()) {
 		new_obj := Obj(obj).CreateNew()
 

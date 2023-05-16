@@ -102,3 +102,17 @@ func Test_Base_6(t *testing.T) {
 		t.Error()
 	}
 }
+
+func Test_Base_7(t *testing.T) {
+	type T1 struct {
+		TestStr string
+	}
+
+	obj := []T1{}
+	obj = append(obj, T1{})
+	Obj(&obj).Clear()
+
+	if len(obj) != 0 {
+		t.Error()
+	}
+}

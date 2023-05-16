@@ -142,12 +142,39 @@ func Test_save_6(t *testing.T) {
 		t.Error(err)
 	}
 
-	var obj2 *TestTest_save_5 = nil
+	var obj2 TestTest_save_5
 	err = Coll(obj2).Find(&obj2, primitive.M{})
 	if err != nil {
 		t.Error(err)
 	}
 	if obj2.TestStr != "TestStr" {
+		t.Error()
+	}
+}
+
+func Test_save_7(t *testing.T) {
+	type Test_save_7 struct {
+		BaseObject `bson:"inline"`
+		TestStr    string
+	}
+
+	Coll(Test_save_7{}).Drop()
+
+	obj1 := Test_save_7{}
+	obj1.TestStr = "TestStr"
+	err := Coll(obj1).Save(&obj1)
+	if err != nil {
+		t.Error(err)
+	}
+
+	obj2 := []Test_save_7{}
+	obj2 = append(obj2, Test_save_7{})
+	err = Coll(obj2).Find(&obj2, primitive.M{})
+	if err != nil {
+		t.Error(err)
+	}
+	l := len(obj2)
+	if l != 1 {
 		t.Error()
 	}
 }
