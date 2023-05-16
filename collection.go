@@ -78,29 +78,30 @@ func (coll CollectionStruct) Find(obj interface{}, filter primitive.M) error {
 	}
 
 	if !Obj(obj).sub_obj.IsSlice() {
-		return errors.New("Obj must be slice")
-	}
-
-	cursor, err := coll.Collection.Find(context.TODO(), filter)
-	if err != nil {
-		return err
-	}
-	defer cursor.Close(context.TODO())
-
-	Obj(obj).Clear()
-
-	for cursor.Next(context.Background()) {
-		new_obj := Obj(obj).CreateNew()
-
-		err = cursor.Decode(new_obj.Interface())
+		result := coll.Collection.FindOne(context.TODO(), filter)
+		if result.Err() != nil {
+			return result.Err()
+		}
+		return result.Decode(obj)
+	} else {
+		cursor, err := coll.Collection.Find(context.TODO(), filter)
 		if err != nil {
 			return err
 		}
+		defer cursor.Close(context.TODO())
 
-		Obj(obj).Append(new_obj)
-		//		append_value := reflect.Append(reflect.ValueOf(obj).Elem(), new_obj.obj_value.Elem())
-		//		reflect.ValueOf(obj).Elem().Set(append_value)
+		Obj(obj).Clear()
 
+		for cursor.Next(context.Background()) {
+			new_obj := Obj(obj).CreateNew()
+
+			err = cursor.Decode(new_obj.Interface())
+			if err != nil {
+				return err
+			}
+
+			Obj(obj).Append(new_obj)
+		}
 	}
 	return nil
 }
