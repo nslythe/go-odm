@@ -2,6 +2,8 @@ package goodm
 
 import (
 	"testing"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func Test_GetColletionName_1(t *testing.T) {
@@ -49,10 +51,6 @@ func Test_save_1(t *testing.T) {
 }
 
 func Test_save_2(t *testing.T) {
-	Init(Config{
-		ConnectionString: "mongodb://mongo1.home.slythe.net:27017,mongo2.home.slythe.net:27018,mongo3.home.slythe.net:27019/test_gogame?replicaSet=rs0",
-	})
-
 	type TestTest1 struct {
 		BaseObject
 	}
@@ -64,10 +62,6 @@ func Test_save_2(t *testing.T) {
 }
 
 func Test_save_3(t *testing.T) {
-	Init(Config{
-		ConnectionString: "mongodb://mongo1.home.slythe.net:27017,mongo2.home.slythe.net:27018,mongo3.home.slythe.net:27019/test_gogame?replicaSet=rs0",
-	})
-
 	type TestTest1 struct {
 		BaseObject `bson:"inline"`
 	}
@@ -76,5 +70,59 @@ func Test_save_3(t *testing.T) {
 	err := Coll(obj).Save(&obj)
 	if err != nil {
 		t.Errorf("BaseObject not inline %s", err)
+	}
+}
+
+func Test_save_4(t *testing.T) {
+	type TestTest1 struct {
+		BaseObject `bson:"inline"`
+		TestStr    string
+	}
+
+	obj1 := TestTest1{}
+	obj1.TestStr = "TestStr"
+	err := Coll(obj1).Save(&obj1)
+	if err != nil {
+		t.Errorf("BaseObject not inline %s", err)
+	}
+
+	obj2 := TestTest1{}
+	err = Coll(obj2).Load(&obj2)
+	if err == nil {
+		t.Error()
+	}
+
+	obj2.Id = obj1.Id
+	err = Coll(obj2).Load(&obj2)
+	if err != nil {
+		t.Error()
+	}
+	if obj2.TestStr != obj1.TestStr {
+		t.Error()
+	}
+}
+
+func Test_save_5(t *testing.T) {
+	type TestTest_save_5 struct {
+		BaseObject `bson:"inline"`
+		TestStr    string
+	}
+
+	Coll(TestTest_save_5{}).Drop()
+
+	obj1 := TestTest_save_5{}
+	obj1.TestStr = "TestStr"
+	err := Coll(obj1).Save(&obj1)
+	if err != nil {
+		t.Error(err)
+	}
+
+	obj2 := []TestTest_save_5{}
+	err = Coll(obj2).Find(&obj2, primitive.M{})
+	if err != nil {
+		t.Error(err)
+	}
+	if len(obj2) != 1 {
+		t.Error()
 	}
 }

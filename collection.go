@@ -18,29 +18,18 @@ type CollectionStruct struct {
 
 type Collection interface {
 	Save(obj interface{}) error
+	Load(obj interface{}) error
+	Find(obj interface{}, filter primitive.M) error
+	Drop()
 }
 
 func (coll CollectionStruct) Save(obj interface{}) error {
-	if coll.Collection == nil {
-		return errors.New("Colelction not initialised")
-	}
-
-	if !Obj(obj).FieldExists("BaseObject") {
-		return errors.New("No BaseObject")
-	}
-	bson_tag := Obj(obj).FieldTag("BaseObject", "bson")
-	if !strings.Contains(bson_tag, "inline") {
-		return errors.New("BaseObject not inline")
-	}
-
-	id, err := GetID(obj)
+	err := coll.validate_object(obj)
 	if err != nil {
 		return err
 	}
 
-	ctx, client, cancel, err := CreateConnection()
-	defer client.Disconnect(ctx)
-	defer cancel()
+	id, err := GetID(obj)
 	if err != nil {
 		return err
 	}
@@ -49,11 +38,68 @@ func (coll CollectionStruct) Save(obj interface{}) error {
 		SetID(obj, primitive.NewObjectID())
 	}
 
-	_, err = coll.Collection.InsertOne(ctx, obj)
+	_, err = coll.Collection.InsertOne(context.TODO(), obj)
 	if err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func (coll CollectionStruct) Load(obj interface{}) error {
+	err := coll.validate_object(obj)
+	if err != nil {
+		return err
+	}
+
+	if reflect.ValueOf(obj).Kind() != reflect.Ptr {
+		return errors.New("Obj mus be ptr")
+	}
+
+	id, err := GetID(obj)
+	if id == primitive.NilObjectID {
+		return errors.New("Id not set")
+	}
+
+	filter := primitive.M{"_id": id}
+	result := coll.Collection.FindOne(context.TODO(), filter)
+	if result.Err() != nil {
+		return result.Err()
+	}
+	result.Decode(obj)
+
+	return nil
+}
+
+func (coll CollectionStruct) Find(obj interface{}, filter primitive.M) error {
+	err := coll.validate_object(obj)
+	if err != nil {
+		return err
+	}
+
+	if !Obj(obj).sub_obj.IsSlice() {
+		return errors.New("Obj must be slice")
+	}
+
+	cursor, err := coll.Collection.Find(context.TODO(), filter)
+	if err != nil {
+		return err
+	}
+	defer cursor.Close(context.TODO())
+
+	for cursor.Next(context.Background()) {
+		new_obj := Obj(obj).CreateNew()
+
+		err = cursor.Decode(new_obj.Interface())
+		if err != nil {
+			return err
+		}
+
+		Obj(obj).Append(new_obj)
+		//		append_value := reflect.Append(reflect.ValueOf(obj).Elem(), new_obj.obj_value.Elem())
+		//		reflect.ValueOf(obj).Elem().Set(append_value)
+
+	}
 	return nil
 }
 
@@ -96,71 +142,21 @@ func GetCollectionName(obj interface{}) string {
 	return strings.ToLower(new_type_name)
 }
 
-func Find(obj interface{}, filter primitive.M) error {
-	if reflect.ValueOf(obj).Kind() != reflect.Ptr {
-		return errors.New("Obj mus be ptr")
-	}
-
-	if reflect.ValueOf(obj).Elem().Kind() != reflect.Slice {
-		return errors.New("Obj must be slice")
-	}
-
-	obj_type := reflect.TypeOf(obj).Elem().Elem()
-	collection_name := GetCollectionName(obj_type.Name())
-
-	ctx, client, cancel, err := CreateConnection()
-	defer client.Disconnect(ctx)
-	defer cancel()
-	if err != nil {
-		return err
-	}
-
-	cursor, err := client.Database(config.connection_string.Database).Collection(collection_name).Find(ctx, filter)
-	if err != nil {
-		return err
-	}
-	defer cursor.Close(ctx)
-
-	for cursor.Next(context.Background()) {
-		new_obj := reflect.New(obj_type)
-
-		err = cursor.Decode(new_obj.Interface())
-		if err != nil {
-			return err
-		}
-
-		reflect.ValueOf(obj).Elem().Set(
-			reflect.Append(reflect.ValueOf(obj).Elem(), new_obj.Elem()))
-
-	}
-
-	return nil
+func (coll CollectionStruct) Drop() {
+	coll.Collection.Drop(context.Background())
 }
 
-func Load(obj interface{}) error {
-	if reflect.ValueOf(obj).Kind() != reflect.Ptr {
-		return errors.New("Obj mus be ptr")
+func (coll CollectionStruct) validate_object(obj interface{}) error {
+	if coll.Collection == nil {
+		return errors.New("Colelction not initialised")
 	}
 
-	collection_name := GetCollectionName(GetCollectionName(obj))
-	id, err := GetID(obj)
-	if id == primitive.NilObjectID {
-		return errors.New("Id not set")
+	if !Obj(obj).FieldExists("BaseObject") {
+		return errors.New("No BaseObject")
 	}
-
-	ctx, client, cancel, err := CreateConnection()
-	defer client.Disconnect(ctx)
-	defer cancel()
-	if err != nil {
-		return err
+	bson_tag := Obj(obj).FieldTag("BaseObject", "bson")
+	if !strings.Contains(bson_tag, "inline") {
+		return errors.New("BaseObject not inline")
 	}
-
-	filter := primitive.M{"_id": id}
-	result := client.Database(config.connection_string.Database).Collection(collection_name).FindOne(ctx, filter)
-	if result.Err() != nil {
-		return result.Err()
-	}
-	result.Decode(obj)
-
 	return nil
 }
