@@ -21,6 +21,7 @@ type Collection interface {
 	Load(obj interface{}) error
 	Find(obj interface{}, filter primitive.M) error
 	Drop()
+	Delete(obj interface{}) error
 }
 
 func (coll CollectionStruct) Save(obj interface{}) error {
@@ -103,6 +104,33 @@ func (coll CollectionStruct) Find(obj interface{}, filter primitive.M) error {
 			Obj(obj).Append(new_obj)
 		}
 	}
+	return nil
+}
+
+func (coll CollectionStruct) Delete(obj interface{}) error {
+	err := coll.validate_object(obj)
+	if err != nil {
+		return err
+	}
+
+	if !Obj(obj).IsSlice() {
+		filter := primitive.M{"_id": Obj(obj).Field("Id").Interface().(primitive.ObjectID)}
+		result, _ := coll.Collection.DeleteOne(context.TODO(), filter)
+		if result.DeletedCount == 1 {
+			Obj(obj).Field("Id").Set(primitive.NilObjectID)
+		}
+	} else {
+		ids := []primitive.ObjectID{}
+		index := Obj(obj).Len()
+		for i := 0; i < index; i++ {
+			ids = append(ids, Obj(obj).Index(i).Field("Id").Interface().(primitive.ObjectID))
+		}
+		result, _ := coll.Collection.DeleteMany(context.TODO(), primitive.M{"_id": primitive.M{"$in": ids}})
+		if result.DeletedCount == 0 {
+			return errors.New("No delete")
+		}
+	}
+
 	return nil
 }
 

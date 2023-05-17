@@ -116,3 +116,18 @@ func Test_Base_7(t *testing.T) {
 		t.Error()
 	}
 }
+
+func Test_Base_8(t *testing.T) {
+	type T1 struct {
+		TestStr string
+	}
+
+	obj := []T1{}
+	obj = append(obj, T1{})
+	obj = append(obj, T1{})
+	obj = append(obj, T1{})
+
+	if Obj(&obj).Len() != 3 {
+		t.Error()
+	}
+}

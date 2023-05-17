@@ -48,6 +48,9 @@ func (obj DataObject) Name() string {
 }
 
 func (obj DataObject) IsSlice() bool {
+	if obj.obj_type.Kind() == reflect.Ptr {
+		return obj.sub_obj.IsSlice()
+	}
 	return obj.obj_value.Kind() == reflect.Slice
 }
 
@@ -98,9 +101,16 @@ func (obj DataObject) Field(name string) DataObject {
 
 func (obj DataObject) Index(i int) DataObject {
 	if obj.obj_type.Kind() != reflect.Slice {
-		return DataObject{}
+		return obj.sub_obj.Index(i)
 	}
 	return *create_DataObject_from_reflect(obj.obj_value.Index(i).Type(), obj.obj_value.Index(i))
+}
+
+func (obj DataObject) Len() int {
+	if obj.obj_type.Kind() != reflect.Slice {
+		return obj.sub_obj.Len()
+	}
+	return obj.obj_value.Len()
 }
 
 func (obj DataObject) Clear() {
