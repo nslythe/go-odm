@@ -16,14 +16,24 @@ type CollectionStruct struct {
 }
 
 type Collection interface {
-	Save(obj DataObject) error
-	Load(obj DataObject) error
-	Find(obj DataObject, filter primitive.M) error
+	Save(obj interface{}) error
+	Load(obj interface{}) error
+	Find(obj interface{}, filter primitive.M) error
 	Drop()
-	Delete(obj DataObject) error
+	Delete(obj interface{}) error
 }
 
-func (coll CollectionStruct) Save(obj DataObject) error {
+func to_object(o interface{}) DataObject {
+	return_value, ok := o.(DataObject)
+	if !ok {
+		return_value = Obj(o)
+	}
+	return return_value
+}
+
+func (coll CollectionStruct) Save(o interface{}) error {
+	obj := to_object(o)
+
 	err := coll.validate_object(obj)
 	if err != nil {
 		return err
@@ -49,7 +59,9 @@ func (coll CollectionStruct) Save(obj DataObject) error {
 	return nil
 }
 
-func (coll CollectionStruct) Load(obj DataObject) error {
+func (coll CollectionStruct) Load(o interface{}) error {
+	obj := to_object(o)
+
 	err := coll.validate_object(obj)
 	if err != nil {
 		return err
@@ -70,7 +82,9 @@ func (coll CollectionStruct) Load(obj DataObject) error {
 	return nil
 }
 
-func (coll CollectionStruct) Find(obj DataObject, filter primitive.M) error {
+func (coll CollectionStruct) Find(o interface{}, filter primitive.M) error {
+	obj := to_object(o)
+
 	err := coll.validate_object(obj)
 	if err != nil {
 		return err
@@ -105,7 +119,9 @@ func (coll CollectionStruct) Find(obj DataObject, filter primitive.M) error {
 	return nil
 }
 
-func (coll CollectionStruct) Delete(obj DataObject) error {
+func (coll CollectionStruct) Delete(o interface{}) error {
+	obj := to_object(o)
+
 	err := coll.validate_object(obj)
 	if err != nil {
 		return err
@@ -132,7 +148,9 @@ func (coll CollectionStruct) Delete(obj DataObject) error {
 	return nil
 }
 
-func Coll(obj DataObject) Collection {
+func Coll(o interface{}) Collection {
+	obj := to_object(o)
+
 	client, err := mongo.Connect(context.TODO(), config.root_options)
 	if err != nil {
 		return nil

@@ -72,6 +72,17 @@ func Test_save_2(t *testing.T) {
 	}
 }
 
+func Test_save_21(t *testing.T) {
+	type TestTest1 struct {
+		BaseObject
+	}
+	obj := &TestTest1{}
+	err := Coll(obj).Save(obj)
+	if err == nil {
+		t.Errorf("BaseObject not inline %s", err)
+	}
+}
+
 func Test_save_3(t *testing.T) {
 	type TestTest1 struct {
 		BaseObject `bson:"inline"`
