@@ -2,6 +2,8 @@ package goodm
 
 import (
 	"testing"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func Test_GetColletionName_1(t *testing.T) {
@@ -35,6 +37,16 @@ func Test_GetColletionName_4(t *testing.T) {
 func Test_GetColletionName_5(t *testing.T) {
 	type TestTest1 struct{}
 	if GetCollectionName(Obj(&TestTest1{})) != "goodm__test_test1" {
+		t.Error("failed")
+	}
+}
+
+func Test_GetColletionName_6(t *testing.T) {
+	type TestTest1 struct{}
+	if GetCollectionName(Obj(&TestTest1{})) != "goodm__test_test1" {
+		t.Error("failed")
+	}
+	if GetCollectionName(Obj(&[]TestTest1{})) != "goodm__test_test1" {
 		t.Error("failed")
 	}
 }
@@ -106,172 +118,192 @@ func Test_save_4(t *testing.T) {
 	}
 }
 
-// func Test_save_5(t *testing.T) {
-// 	type TestTest_save_5 struct {
-// 		BaseObject `bson:"inline"`
-// 		TestStr    string
-// 	}
+func Test_save_5(t *testing.T) {
+	type TestTest_save_5 struct {
+		BaseObject `bson:"inline"`
+		TestStr    string
+	}
 
-// 	Coll(TestTest_save_5{}).Drop()
+	test := TestTest_save_5{}
+	test_slice := []TestTest_save_5{}
 
-// 	obj1 := TestTest_save_5{}
-// 	obj1.TestStr = "TestStr"
-// 	err := Coll(obj1).Save(&obj1)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
+	obj := Obj(&test)
+	obj_slice := Obj(&test_slice)
 
-// 	obj2 := []TestTest_save_5{}
-// 	err = Coll(obj2).Find(&obj2, primitive.M{})
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// 	if len(obj2) != 1 {
-// 		t.Error()
-// 	}
-// }
+	Coll(obj).Drop()
 
-// func Test_save_6(t *testing.T) {
-// 	type TestTest_save_5 struct {
-// 		BaseObject `bson:"inline"`
-// 		TestStr    string
-// 	}
+	test.TestStr = "TestStr"
+	err := Coll(obj).Save(obj)
+	if err != nil {
+		t.Error(err)
+	}
 
-// 	Coll(TestTest_save_5{}).Drop()
+	err = Coll(obj_slice).Find(obj_slice, primitive.M{})
+	if err != nil {
+		t.Error(err)
+	}
+	if len(test_slice) != 1 {
+		t.Error()
+	}
+}
 
-// 	obj1 := TestTest_save_5{}
-// 	obj1.TestStr = "TestStr"
-// 	err := Coll(obj1).Save(&obj1)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
+func Test_save_6(t *testing.T) {
+	type TestTest_save_5 struct {
+		BaseObject `bson:"inline"`
+		TestStr    string
+	}
 
-// 	var obj2 TestTest_save_5
-// 	err = Coll(obj2).Find(&obj2, primitive.M{})
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// 	if obj2.TestStr != "TestStr" {
-// 		t.Error()
-// 	}
-// }
+	test := TestTest_save_5{}
+	obj := Obj(&test)
 
-// func Test_save_7(t *testing.T) {
-// 	type Test_save_7 struct {
-// 		BaseObject `bson:"inline"`
-// 		TestStr    string
-// 	}
+	Coll(obj).Drop()
 
-// 	Coll(Test_save_7{}).Drop()
+	test.TestStr = "TestStr"
+	err := Coll(obj).Save(obj)
+	if err != nil {
+		t.Error(err)
+	}
 
-// 	obj1 := Test_save_7{}
-// 	obj1.TestStr = "TestStr"
-// 	err := Coll(obj1).Save(&obj1)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
+	var test2 TestTest_save_5
+	obj2 := Obj(&test2)
+	err = Coll(obj2).Find(obj2, primitive.M{})
+	if err != nil {
+		t.Error(err)
+	}
+	if test2.TestStr != "TestStr" {
+		t.Error()
+	}
+}
 
-// 	obj2 := []Test_save_7{}
-// 	obj2 = append(obj2, Test_save_7{})
-// 	err = Coll(obj2).Find(&obj2, primitive.M{})
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// 	l := len(obj2)
-// 	if l != 1 {
-// 		t.Error()
-// 	}
-// }
+func Test_save_7(t *testing.T) {
+	type Test_save_7 struct {
+		BaseObject `bson:"inline"`
+		TestStr    string
+	}
 
-// func Test_save_8(t *testing.T) {
-// 	type Test_save_8 struct {
-// 		BaseObject `bson:"inline"`
-// 		TestStr    string
-// 	}
+	test1 := Test_save_7{}
+	test1.TestStr = "TestStr"
+	obj1 := Obj(&test1)
 
-// 	Coll(Test_save_8{}).Drop()
+	Coll(obj1).Drop()
 
-// 	obj1 := Test_save_8{}
-// 	obj1.TestStr = "TestStr"
-// 	err := Coll(obj1).Save(&obj1)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
+	err := Coll(obj1).Save(obj1)
+	if err != nil {
+		t.Error(err)
+	}
 
-// 	err = Coll(obj1).Delete(&obj1)
+	test_slice := []Test_save_7{}
+	test_slice = append(test_slice, Test_save_7{})
+	obj_slice := Obj(&test_slice)
+	err = Coll(obj_slice).Find(obj_slice, primitive.M{})
+	if err != nil {
+		t.Error(err)
+	}
+	l := len(test_slice)
+	if l != 1 {
+		t.Error()
+	}
+}
 
-// 	obj2 := []Test_save_8{}
-// 	err = Coll(obj2).Find(&obj2, primitive.M{})
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// 	l := len(obj2)
-// 	if l != 0 {
-// 		t.Error()
-// 	}
-// }
+func Test_save_8(t *testing.T) {
+	type Test_save_8 struct {
+		BaseObject `bson:"inline"`
+		TestStr    string
+	}
 
-// func Test_save_9(t *testing.T) {
-// 	type Test_save_9 struct {
-// 		BaseObject `bson:"inline"`
-// 		TestStr    string
-// 	}
+	test := Test_save_8{}
+	obj1 := Obj(&test)
+	Coll(obj1).Drop()
 
-// 	Coll(Test_save_9{}).Drop()
+	test2 := Test_save_8{}
+	test2.TestStr = "TestStr"
+	obj2 := Obj(&test2)
+	err := Coll(obj2).Save(obj2)
+	if err != nil {
+		t.Error(err)
+	}
 
-// 	obj1 := Test_save_9{}
-// 	obj1.TestStr = "TestStr1"
-// 	err := Coll(obj1).Save(&obj1)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
+	err = Coll(obj1).Delete(obj2)
 
-// 	obj2 := Test_save_9{}
-// 	obj2.TestStr = "TestStr2"
-// 	err = Coll(obj2).Save(&obj2)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
+	test_slice := []Test_save_8{}
+	obj_slice := Obj(&test_slice)
+	err = Coll(obj_slice).Find(obj_slice, primitive.M{})
+	if err != nil {
+		t.Error(err)
+	}
+	l := len(test_slice)
+	if l != 0 {
+		t.Error()
+	}
+}
 
-// 	obj3 := Test_save_9{}
-// 	obj3.TestStr = "TestStr3"
-// 	err = Coll(obj3).Save(&obj3)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
+func Test_save_9(t *testing.T) {
+	type Test_save_9 struct {
+		BaseObject `bson:"inline"`
+		TestStr    string
+	}
+	test1 := Test_save_9{}
+	test1.TestStr = "TestStr1"
+	obj1 := Obj(&test1)
 
-// 	obj_find := []Test_save_9{}
-// 	err = Coll(obj_find).Find(&obj_find, primitive.M{})
-// 	l := len(obj_find)
-// 	if l != 3 {
-// 		t.Error()
-// 	}
+	test2 := Test_save_9{}
+	test2.TestStr = "TestStr2"
+	obj2 := Obj(&test2)
 
-// 	obj_to_delete := []Test_save_9{}
-// 	obj_to_delete = append(obj_to_delete, Test_save_9{
-// 		BaseObject: BaseObject{
-// 			Id: obj1.Id,
-// 		},
-// 	})
-// 	obj_to_delete = append(obj_to_delete, Test_save_9{
-// 		BaseObject: BaseObject{
-// 			Id: obj2.Id,
-// 		},
-// 	})
-// 	obj_to_delete = append(obj_to_delete, Test_save_9{
-// 		BaseObject: BaseObject{
-// 			Id: obj3.Id,
-// 		},
-// 	})
+	test3 := Test_save_9{}
+	test3.TestStr = "TestStr3"
+	obj3 := Obj(&test3)
 
-// 	err = Coll(obj1).Delete(&obj_to_delete)
+	Coll(obj1).Drop()
 
-// 	err = Coll(obj_find).Find(&obj_find, primitive.M{})
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// 	l = len(obj_find)
-// 	if l != 0 {
-// 		t.Error()
-// 	}
-// }
+	err := Coll(obj1).Save(obj1)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = Coll(obj2).Save(obj2)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = Coll(obj3).Save(obj3)
+	if err != nil {
+		t.Error(err)
+	}
+
+	test_find := []Test_save_9{}
+	obj_find := Obj(&test_find)
+	err = Coll(obj_find).Find(obj_find, primitive.M{})
+	l := len(test_find)
+	if l != 3 {
+		t.Error()
+	}
+
+	obj_to_delete := []Test_save_9{}
+	obj_to_delete = append(obj_to_delete, Test_save_9{
+		BaseObject: BaseObject{
+			Id: test1.Id,
+		},
+	})
+	obj_to_delete = append(obj_to_delete, Test_save_9{
+		BaseObject: BaseObject{
+			Id: test2.Id,
+		},
+	})
+	obj_to_delete = append(obj_to_delete, Test_save_9{
+		BaseObject: BaseObject{
+			Id: test3.Id,
+		},
+	})
+
+	err = Coll(obj1).Delete(Obj(&obj_to_delete))
+
+	err = Coll(obj_find).Find(obj_find, primitive.M{})
+	if err != nil {
+		t.Error(err)
+	}
+	l = len(test_find)
+	if l != 0 {
+		t.Error()
+	}
+}

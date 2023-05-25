@@ -34,11 +34,15 @@ func create_DataObject_from_reflect(t reflect.Type, v reflect.Value) *DataObject
 }
 
 func (obj DataObject) Name() string {
-	if obj.obj_type.Kind() == reflect.Ptr || obj.obj_type.Kind() == reflect.Slice {
-		return obj.obj_type.Elem().Name()
-	} else {
-		return obj.obj_type.Name()
+	t := obj.obj_type
+
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
 	}
+	if t.Kind() == reflect.Slice {
+		t = t.Elem()
+	}
+	return t.Name()
 }
 
 func (obj DataObject) IsSlice() bool {
@@ -49,41 +53,61 @@ func (obj DataObject) IsSlice() bool {
 }
 
 func (obj DataObject) CreateNew() DataObject {
-	var v reflect.Value
-	if obj.obj_type.Kind() == reflect.Ptr || obj.obj_type.Kind() == reflect.Slice {
-		v = reflect.New(obj.obj_type.Elem())
-	} else {
-		v = reflect.New(obj.obj_type)
+	var t reflect.Type = obj.obj_type
+
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
 	}
+	if t.Kind() == reflect.Slice {
+		t = t.Elem()
+	}
+
+	v := reflect.New(t)
 	return *create_DataObject_from_reflect(v.Type(), v)
 }
 
 func (obj DataObject) Package() string {
-	if obj.obj_type.Kind() == reflect.Ptr || obj.obj_type.Kind() == reflect.Slice {
-		return obj.obj_type.Elem().PkgPath()
-	} else {
-		return obj.obj_type.PkgPath()
+	t := obj.obj_type
+
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
 	}
+	if t.Kind() == reflect.Slice {
+		t = t.Elem()
+	}
+	return t.PkgPath()
 }
 
 func (obj DataObject) FieldExists(name string) bool {
-	if obj.obj_type.Kind() == reflect.Ptr || obj.obj_type.Kind() == reflect.Slice {
-		_, ok := obj.obj_type.Elem().FieldByName(name)
-		return ok
-	} else {
-		_, ok := obj.obj_type.FieldByName(name)
-		return ok
+	t := obj.obj_type
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
 	}
+
+	if t.Kind() == reflect.Slice {
+		t = t.Elem()
+	}
+
+	_, ok := t.FieldByName(name)
+	return ok
 }
 
 func (obj DataObject) FieldTag(name string, tagName string) string {
-	if obj.obj_type.Kind() == reflect.Ptr || obj.obj_type.Kind() == reflect.Slice {
-		f, _ := obj.obj_type.Elem().FieldByName(name)
-		return f.Tag.Get(tagName)
-	} else {
-		f, _ := obj.obj_type.FieldByName(name)
-		return f.Tag.Get(tagName)
+	if !obj.FieldExists(name) {
+		panic("Field does not exists")
 	}
+
+	t := obj.obj_type
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	if t.Kind() == reflect.Slice {
+		t = t.Elem()
+	}
+
+	f, _ := t.FieldByName(name)
+	return f.Tag.Get(tagName)
 }
 
 func (obj DataObject) Field(name string) DataObject {
