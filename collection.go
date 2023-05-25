@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"unicode"
 
@@ -17,29 +16,32 @@ type CollectionStruct struct {
 }
 
 type Collection interface {
-	Save(obj interface{}) error
-	Load(obj interface{}) error
-	Find(obj interface{}, filter primitive.M) error
+	Save(obj DataObject) error
+	Load(obj DataObject) error
+	Find(obj DataObject, filter primitive.M) error
 	Drop()
-	Delete(obj interface{}) error
+	Delete(obj DataObject) error
 }
 
-func (coll CollectionStruct) Save(obj interface{}) error {
+func (coll CollectionStruct) Save(obj DataObject) error {
 	err := coll.validate_object(obj)
 	if err != nil {
 		return err
 	}
 
-	id, err := GetID(obj)
+	id, err := obj.GetID()
 	if err != nil {
 		return err
 	}
 
 	if id == primitive.NilObjectID {
-		SetID(obj, primitive.NewObjectID())
+		err = obj.SetID(primitive.NewObjectID())
+		if err != nil {
+			return err
+		}
 	}
 
-	_, err = coll.Collection.InsertOne(context.TODO(), obj)
+	_, err = coll.Collection.InsertOne(context.TODO(), obj.Interface())
 	if err != nil {
 		return err
 	}
@@ -47,17 +49,13 @@ func (coll CollectionStruct) Save(obj interface{}) error {
 	return nil
 }
 
-func (coll CollectionStruct) Load(obj interface{}) error {
+func (coll CollectionStruct) Load(obj DataObject) error {
 	err := coll.validate_object(obj)
 	if err != nil {
 		return err
 	}
 
-	if reflect.ValueOf(obj).Kind() != reflect.Ptr {
-		return errors.New("Obj mus be ptr")
-	}
-
-	id, err := GetID(obj)
+	id, err := obj.GetID()
 	if id == primitive.NilObjectID {
 		return errors.New("Id not set")
 	}
@@ -67,23 +65,23 @@ func (coll CollectionStruct) Load(obj interface{}) error {
 	if result.Err() != nil {
 		return result.Err()
 	}
-	result.Decode(obj)
+	result.Decode(obj.obj_interface)
 
 	return nil
 }
 
-func (coll CollectionStruct) Find(obj interface{}, filter primitive.M) error {
+func (coll CollectionStruct) Find(obj DataObject, filter primitive.M) error {
 	err := coll.validate_object(obj)
 	if err != nil {
 		return err
 	}
 
-	if !Obj(obj).sub_obj.IsSlice() {
+	if !obj.IsSlice() {
 		result := coll.Collection.FindOne(context.TODO(), filter)
 		if result.Err() != nil {
 			return result.Err()
 		}
-		return result.Decode(obj)
+		return result.Decode(obj.obj_interface)
 	} else {
 		cursor, err := coll.Collection.Find(context.TODO(), filter)
 		if err != nil {
@@ -91,39 +89,39 @@ func (coll CollectionStruct) Find(obj interface{}, filter primitive.M) error {
 		}
 		defer cursor.Close(context.TODO())
 
-		Obj(obj).Clear()
+		obj.Clear()
 
 		for cursor.Next(context.Background()) {
-			new_obj := Obj(obj).CreateNew()
+			new_obj := obj.CreateNew()
 
 			err = cursor.Decode(new_obj.Interface())
 			if err != nil {
 				return err
 			}
 
-			Obj(obj).Append(new_obj)
+			obj.Append(new_obj)
 		}
 	}
 	return nil
 }
 
-func (coll CollectionStruct) Delete(obj interface{}) error {
+func (coll CollectionStruct) Delete(obj DataObject) error {
 	err := coll.validate_object(obj)
 	if err != nil {
 		return err
 	}
 
-	if !Obj(obj).IsSlice() {
-		filter := primitive.M{"_id": Obj(obj).Field("Id").Interface().(primitive.ObjectID)}
+	if !obj.IsSlice() {
+		filter := primitive.M{"_id": obj.Field("Id").Interface().(primitive.ObjectID)}
 		result, _ := coll.Collection.DeleteOne(context.TODO(), filter)
 		if result.DeletedCount == 1 {
-			Obj(obj).Field("Id").Set(primitive.NilObjectID)
+			obj.Field("Id").Set(primitive.NilObjectID)
 		}
 	} else {
 		ids := []primitive.ObjectID{}
-		index := Obj(obj).Len()
+		index := obj.Len()
 		for i := 0; i < index; i++ {
-			ids = append(ids, Obj(obj).Index(i).Field("Id").Interface().(primitive.ObjectID))
+			ids = append(ids, obj.Index(i).Field("Id").Interface().(primitive.ObjectID))
 		}
 		result, _ := coll.Collection.DeleteMany(context.TODO(), primitive.M{"_id": primitive.M{"$in": ids}})
 		if result.DeletedCount == 0 {
@@ -134,7 +132,7 @@ func (coll CollectionStruct) Delete(obj interface{}) error {
 	return nil
 }
 
-func Coll(obj interface{}) Collection {
+func Coll(obj DataObject) Collection {
 	client, err := mongo.Connect(context.TODO(), config.root_options)
 	if err != nil {
 		return nil
@@ -145,15 +143,15 @@ func Coll(obj interface{}) Collection {
 	return collection
 }
 
-func GetCollectionName(obj interface{}) string {
+func GetCollectionName(obj DataObject) string {
 	new_type_name := ""
 	type_name := ""
 
-	package_name := filepath.Base(Obj(obj).Package())
+	package_name := filepath.Base(obj.Package())
 	if package_name != "." {
-		type_name = package_name + "_" + Obj(obj).Name()
+		type_name = package_name + "_" + obj.Name()
 	} else {
-		type_name = Obj(obj).Name()
+		type_name = obj.Name()
 	}
 
 	for _, c := range type_name {
@@ -177,15 +175,15 @@ func (coll CollectionStruct) Drop() {
 	coll.Collection.Drop(context.Background())
 }
 
-func (coll CollectionStruct) validate_object(obj interface{}) error {
+func (coll CollectionStruct) validate_object(obj DataObject) error {
 	if coll.Collection == nil {
 		return errors.New("Colelction not initialised")
 	}
 
-	if !Obj(obj).FieldExists("BaseObject") {
+	if !obj.FieldExists("BaseObject") {
 		return errors.New("No BaseObject")
 	}
-	bson_tag := Obj(obj).FieldTag("BaseObject", "bson")
+	bson_tag := obj.FieldTag("BaseObject", "bson")
 	if !strings.Contains(bson_tag, "inline") {
 		return errors.New("BaseObject not inline")
 	}

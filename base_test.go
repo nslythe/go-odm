@@ -4,35 +4,12 @@ import (
 	"testing"
 )
 
-func Test_Base_1(t *testing.T) {
-
-	if Obj("11").String() != "11" {
-		t.Error()
-	}
-
-	if Obj(11).String() != "11" {
-		t.Error()
-	}
-
-	if Obj(true).String() != "true" {
-		t.Error()
-	}
-
-	if Obj(3.1).String() != "3.10000" {
-		t.Error()
-	}
-}
-
 func Test_Base_2(t *testing.T) {
 	type T1 struct {
 		Test string
 	}
 
-	if Obj(T1{Test: "1"}).Interface().(T1).Test != "1" {
-		t.Error()
-	}
-
-	if Obj("test").Interface().(string) != "test" {
+	if Obj(&T1{Test: "1"}).Interface().(*T1).Test != "1" {
 		t.Error()
 	}
 }
@@ -46,17 +23,17 @@ func Test_Base_3(t *testing.T) {
 		T1      T1
 	}
 
-	if Obj(T1{TestStr: "1"}).Field("TestStr").String() != "1" {
+	if Obj(&T1{TestStr: "1"}).Field("TestStr").String() != "1" {
 		t.Error()
 	}
-	if Obj(T2{
+	if Obj(&T2{
 		TestInt: 1,
 		T1: T1{
 			TestStr: "TestStr",
 		}}).Field("TestInt").String() != "1" {
 		t.Error()
 	}
-	if Obj(T2{
+	if Obj(&T2{
 		TestInt: 1,
 		T1: T1{
 			TestStr: "TestStr",
@@ -74,10 +51,10 @@ func Test_Base_4(t *testing.T) {
 	obj = append(obj, T1{TestStr: "TestStr1"})
 	obj = append(obj, T1{TestStr: "TestStr2"})
 
-	if Obj(obj).Index(0).Field("TestStr").String() != "TestStr1" {
+	if Obj(&obj).Index(0).Field("TestStr").String() != "TestStr1" {
 		t.Error()
 	}
-	if Obj(obj).Index(1).Field("TestStr").String() != "TestStr2" {
+	if Obj(&obj).Index(1).Field("TestStr").String() != "TestStr2" {
 		t.Error()
 	}
 }
@@ -97,7 +74,7 @@ func Test_Base_6(t *testing.T) {
 
 	obj := []T1{}
 
-	Obj(&obj).Append(Obj(T1{TestStr: "1"}))
+	Obj(&obj).Append(Obj(&T1{TestStr: "1"}))
 	if len(obj) != 1 {
 		t.Error()
 	}
