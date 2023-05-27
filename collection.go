@@ -51,7 +51,9 @@ func (coll CollectionStruct) Save(o interface{}) error {
 		}
 		obj.SetID(result.InsertedID.(primitive.ObjectID))
 	} else {
-		_, err := coll.Collection.UpdateOne(context.TODO(), primitive.M{"_id": id}, obj.Interface())
+		_, err := coll.Collection.UpdateOne(context.TODO(),
+			primitive.M{"_id": id},
+			primitive.M{"$set": obj.Interface()})
 		if err != nil {
 			return err
 		}
