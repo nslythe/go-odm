@@ -45,15 +45,16 @@ func (coll CollectionStruct) Save(o interface{}) error {
 	}
 
 	if id == primitive.NilObjectID {
-		err = obj.SetID(primitive.NewObjectID())
+		result, err := coll.Collection.InsertOne(context.TODO(), obj.Interface())
 		if err != nil {
 			return err
 		}
-	}
-
-	_, err = coll.Collection.InsertOne(context.TODO(), obj.Interface())
-	if err != nil {
-		return err
+		obj.SetID(result.InsertedID.(primitive.ObjectID))
+	} else {
+		_, err := coll.Collection.UpdateOne(context.TODO(), primitive.M{"_id": id}, obj.Interface())
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
