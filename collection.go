@@ -37,9 +37,11 @@ func Coll(o interface{}) Collection {
 }
 
 func GetCollectionName(obj DataObject) string {
-	goodm_collection := obj.FieldTag("BaseObject", "goodm-collection")
-	if goodm_collection != "" {
-		return goodm_collection
+	if obj.FieldExists("BaseObject") {
+		goodm_collection := obj.FieldTag("BaseObject", "goodm-collection")
+		if goodm_collection != "" {
+			return goodm_collection
+		}
 	}
 
 	new_type_name := ""
@@ -90,7 +92,11 @@ func (coll CollectionStruct) Save(o interface{}) error {
 		return err
 	}
 
+	obj.SetTypeName()
+	obj.SetUpdateTime()
+
 	if id == primitive.NilObjectID {
+		obj.SetID(primitive.NewObjectID())
 		obj.SetCreationTime()
 		result, err := coll.Collection.InsertOne(context.TODO(), obj.Interface())
 		if err != nil {
@@ -98,7 +104,6 @@ func (coll CollectionStruct) Save(o interface{}) error {
 		}
 		obj.SetID(result.InsertedID.(primitive.ObjectID))
 	} else {
-		obj.SetUpdateTime()
 		_, err := coll.Collection.UpdateOne(context.TODO(),
 			primitive.M{"_id": id},
 			primitive.M{"$set": obj.Interface()})

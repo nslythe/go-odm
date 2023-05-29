@@ -13,13 +13,13 @@ type BaseObject struct {
 	Id           primitive.ObjectID `bson:"_id"`
 	CreationTime time.Time          `bson:"_creation_date"`
 	UpdateTime   time.Time          `bson:"_update_time"`
+	TypeName     string             `bson:"_type_name"`
 }
 
 type DataObject struct {
 	obj_type      reflect.Type
 	obj_value     reflect.Value
 	obj_interface interface{}
-	type_name     string
 }
 
 func Obj(obj interface{}) DataObject {
@@ -32,7 +32,6 @@ func create_DataObject_from_reflect(t reflect.Type, v reflect.Value) *DataObject
 	return_value := &DataObject{}
 	return_value.obj_value = v
 	return_value.obj_type = t
-	return_value.type_name = t.Name()
 	return return_value
 }
 
@@ -67,6 +66,10 @@ func (obj DataObject) CreateNew() DataObject {
 
 	v := reflect.New(t)
 	return *create_DataObject_from_reflect(v.Type(), v)
+}
+
+func (obj DataObject) FullTypeName() string {
+	return obj.Package() + "_" + obj.Name()
 }
 
 func (obj DataObject) Package() string {
@@ -265,5 +268,13 @@ func (obj DataObject) SetUpdateTime() error {
 		return errors.New("BaseObject not present")
 	}
 	obj.Field("BaseObject").Field("UpdateTime").Set(time.Now().UTC())
+	return nil
+}
+
+func (obj DataObject) SetTypeName() error {
+	if !obj.FieldExists("BaseObject") {
+		return errors.New("BaseObject not present")
+	}
+	obj.Field("BaseObject").Field("TypeName").Set(obj.FullTypeName())
 	return nil
 }
