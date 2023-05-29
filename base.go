@@ -4,12 +4,15 @@ import (
 	"errors"
 	"reflect"
 	"strconv"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type BaseObject struct {
-	Id primitive.ObjectID `bson:"_id"`
+	Id           primitive.ObjectID `bson:"_id"`
+	CreationTime time.Time          `bson:"_creation_date"`
+	UpdateTime   time.Time          `bson:"_update_time"`
 }
 
 type DataObject struct {
@@ -246,5 +249,21 @@ func (obj DataObject) SetID(id primitive.ObjectID) error {
 		return errors.New("BaseObject not present")
 	}
 	obj.Field("BaseObject").Field("Id").Set(id)
+	return nil
+}
+
+func (obj DataObject) SetCreationTime() error {
+	if !obj.FieldExists("BaseObject") {
+		return errors.New("BaseObject not present")
+	}
+	obj.Field("BaseObject").Field("CreationTime").Set(time.Now().UTC())
+	return nil
+}
+
+func (obj DataObject) SetUpdateTime() error {
+	if !obj.FieldExists("BaseObject") {
+		return errors.New("BaseObject not present")
+	}
+	obj.Field("BaseObject").Field("UpdateTime").Set(time.Now().UTC())
 	return nil
 }
