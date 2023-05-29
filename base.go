@@ -69,7 +69,7 @@ func (obj DataObject) CreateNew() DataObject {
 }
 
 func (obj DataObject) FullTypeName() string {
-	return obj.Package() + "_" + obj.Name()
+	return obj.Package() + "/" + obj.Name()
 }
 
 func (obj DataObject) Package() string {
