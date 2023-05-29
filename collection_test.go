@@ -83,6 +83,15 @@ func Test_save_21(t *testing.T) {
 	}
 }
 
+func Test_save_22(t *testing.T) {
+	type TestTest1 struct {
+		BaseObject `goodm-collection:"test_tesfdfsdfsdt11"`
+	}
+	if GetCollectionName(Obj(TestTest1{})) != "test_tesfdfsdfsdt11" {
+		t.Error()
+	}
+}
+
 func Test_save_3(t *testing.T) {
 	type TestTest1 struct {
 		BaseObject `bson:"inline"`

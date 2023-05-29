@@ -23,6 +23,52 @@ type Collection interface {
 	Delete(obj interface{}) error
 }
 
+func Coll(o interface{}) Collection {
+	obj := to_object(o)
+
+	client, err := mongo.Connect(context.TODO(), config.root_options)
+	if err != nil {
+		return nil
+	}
+
+	collection := CollectionStruct{}
+	collection.Collection = client.Database(config.connection_string.Database).Collection(GetCollectionName(obj))
+	return collection
+}
+
+func GetCollectionName(obj DataObject) string {
+	goodm_collection := obj.FieldTag("BaseObject", "goodm-collection")
+	if goodm_collection != "" {
+		return goodm_collection
+	}
+
+	new_type_name := ""
+	type_name := ""
+
+	package_name := filepath.Base(obj.Package())
+	if package_name != "." {
+		type_name = package_name + "_" + obj.Name()
+	} else {
+		type_name = obj.Name()
+	}
+
+	for _, c := range type_name {
+		skip := false
+		if unicode.IsUpper(c) && len(new_type_name) > 0 {
+			new_type_name += "_"
+		}
+		if c == '-' {
+			new_type_name += "_"
+			skip = true
+		}
+
+		if !skip {
+			new_type_name += string(c)
+		}
+	}
+	return strings.ToLower(new_type_name)
+}
+
 func to_object(o interface{}) DataObject {
 	return_value, ok := o.(DataObject)
 	if !ok {
@@ -151,47 +197,6 @@ func (coll CollectionStruct) Delete(o interface{}) error {
 	}
 
 	return nil
-}
-
-func Coll(o interface{}) Collection {
-	obj := to_object(o)
-
-	client, err := mongo.Connect(context.TODO(), config.root_options)
-	if err != nil {
-		return nil
-	}
-
-	collection := CollectionStruct{}
-	collection.Collection = client.Database(config.connection_string.Database).Collection(GetCollectionName(obj))
-	return collection
-}
-
-func GetCollectionName(obj DataObject) string {
-	new_type_name := ""
-	type_name := ""
-
-	package_name := filepath.Base(obj.Package())
-	if package_name != "." {
-		type_name = package_name + "_" + obj.Name()
-	} else {
-		type_name = obj.Name()
-	}
-
-	for _, c := range type_name {
-		skip := false
-		if unicode.IsUpper(c) && len(new_type_name) > 0 {
-			new_type_name += "_"
-		}
-		if c == '-' {
-			new_type_name += "_"
-			skip = true
-		}
-
-		if !skip {
-			new_type_name += string(c)
-		}
-	}
-	return strings.ToLower(new_type_name)
 }
 
 func (coll CollectionStruct) Drop() {
