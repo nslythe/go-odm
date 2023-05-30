@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -18,7 +19,8 @@ type CollectionStruct struct {
 type Collection interface {
 	Save(obj interface{}) error
 	Load(obj interface{}) error
-	Find(obj interface{}, filter primitive.M) error
+	Find(obj interface{}, filter interface{}) error
+	FindSpecificType(obj interface{}, filter interface{}) error
 	Drop()
 	Delete(obj interface{}) error
 }
@@ -138,7 +140,17 @@ func (coll CollectionStruct) Load(o interface{}) error {
 	return nil
 }
 
-func (coll CollectionStruct) Find(o interface{}, filter primitive.M) error {
+func (coll CollectionStruct) FindSpecificType(o interface{}, filter interface{}) error {
+	obj := to_object(o)
+
+	new_filter := bson.M{"$and": bson.A{
+		bson.M{"_type_name": obj.FullTypeName()},
+		filter,
+	}}
+	return coll.Find(o, new_filter)
+}
+
+func (coll CollectionStruct) Find(o interface{}, filter interface{}) error {
 	obj := to_object(o)
 
 	err := coll.validate_object(obj)

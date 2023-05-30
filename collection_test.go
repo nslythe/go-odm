@@ -154,6 +154,56 @@ func Test_save_31(t *testing.T) {
 	}
 }
 
+func Test_save_33(t *testing.T) {
+	type TestTest1 struct {
+		BaseObject `bson:"inline" goodm-collection:"inheritance_test_test33"`
+		Test1      string
+	}
+	type TestTest2 struct {
+		BaseObject `bson:"inline" goodm-collection:"inheritance_test_test33"`
+		Test1      string
+		Test2      string
+	}
+
+	t1 := TestTest1{
+		Test1: "Test1",
+	}
+	t2 := TestTest2{
+		Test1: "Test1",
+		Test2: "Test2",
+	}
+	obj1 := Obj(&t1)
+	obj2 := Obj(&t2)
+
+	Coll(obj1).Drop()
+
+	err := Coll(obj1).Save(obj1)
+	if err != nil {
+		t.Errorf("BaseObject not inline %s", err)
+	}
+	err = Coll(obj2).Save(obj2)
+	if err != nil {
+		t.Errorf("BaseObject not inline %s", err)
+	}
+
+	t1.Test1 = ""
+	t2.Test2 = ""
+
+	err = Coll(obj1).FindSpecificType(obj1, primitive.M{"test1": "Test1"})
+	if err != nil {
+		t.Error(err)
+	}
+	if t1.Test1 != "Test1" {
+		t.Error()
+	}
+
+	Coll(obj2).FindSpecificType(obj2, primitive.M{"test1": "Test1"})
+	if t2.Test2 != "Test2" {
+		t.Error()
+	}
+
+}
+
 func Test_save_4(t *testing.T) {
 	type TestTest1 struct {
 		BaseObject `bson:"inline"`
