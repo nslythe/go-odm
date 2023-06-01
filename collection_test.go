@@ -427,3 +427,45 @@ func Test_save_9(t *testing.T) {
 		t.Error()
 	}
 }
+
+func Test_update_1(t *testing.T) {
+	type Test_update_1 struct {
+		BaseObject `bson:"inline"`
+		TestStr    string
+		Num        int
+	}
+
+	t1 := Test_update_1{
+		TestStr: "1",
+		Num:     0,
+	}
+	t2 := Test_update_1{
+		TestStr: "2",
+		Num:     2,
+	}
+	obj1 := Obj(&t1)
+	obj2 := Obj(&t2)
+	Coll(obj1).Drop()
+
+	err := Coll(obj1).Save(obj1)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = Coll(obj2).Update(obj2, primitive.M{"teststr": "1"})
+	if err != nil {
+		t.Error(err)
+	}
+	if t2.BaseObject.Id != t1.BaseObject.Id {
+		t.Error()
+	}
+
+	err = Coll(obj1).Update(obj1, primitive.M{"teststr": "2"})
+	if err != nil {
+		t.Error(err)
+	}
+	if t2.BaseObject.Id != t1.BaseObject.Id {
+		t.Error()
+	}
+
+}

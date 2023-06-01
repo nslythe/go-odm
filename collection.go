@@ -18,6 +18,7 @@ type CollectionStruct struct {
 
 type Collection interface {
 	Save(obj interface{}) error
+	Update(obj interface{}, filter interface{}) error
 	Load(obj interface{}) error
 	Find(obj interface{}, filter interface{}) error
 	FindSpecificType(obj interface{}, filter interface{}) error
@@ -115,6 +116,32 @@ func (coll CollectionStruct) Save(o interface{}) error {
 	}
 
 	return nil
+}
+
+func (coll CollectionStruct) Update(o interface{}, filter interface{}) error {
+	obj := to_object(o)
+
+	err := coll.validate_object(obj)
+	if err != nil {
+		return err
+	}
+
+	if err != nil {
+		return err
+	}
+
+	obj.SetTypeName()
+	obj.SetUpdateTime()
+
+	result := coll.Collection.FindOneAndUpdate(context.TODO(), filter, primitive.M{"$set": obj.Interface()})
+	if result.Err() != nil {
+		return err
+	}
+
+	result.Decode(obj.obj_interface)
+
+	return nil
+
 }
 
 func (coll CollectionStruct) Load(o interface{}) error {

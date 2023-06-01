@@ -10,7 +10,7 @@ import (
 )
 
 type BaseObject struct {
-	Id           primitive.ObjectID `bson:"_id"`
+	Id           primitive.ObjectID `bson:"_id,omitempty"`
 	CreationTime time.Time          `bson:"_creation_date"`
 	UpdateTime   time.Time          `bson:"_update_time"`
 	TypeName     string             `bson:"_type_name"`
