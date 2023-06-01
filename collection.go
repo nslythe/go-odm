@@ -135,7 +135,7 @@ func (coll CollectionStruct) Update(o interface{}, filter interface{}) error {
 
 	result := coll.Collection.FindOneAndUpdate(context.TODO(), filter, primitive.M{"$set": obj.Interface()})
 	if result.Err() != nil {
-		return err
+		return result.Err()
 	}
 
 	result.Decode(obj.obj_interface)
