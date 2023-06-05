@@ -24,6 +24,8 @@ type Collection interface {
 	FindSpecificType(obj interface{}, filter interface{}) error
 	Drop()
 	Delete(obj interface{}) error
+	MongoCollection() mongo.Collection
+	Count(filter interface{}) (int64, error)
 }
 
 func Coll(o interface{}) Collection {
@@ -80,6 +82,14 @@ func to_object(o interface{}) DataObject {
 		return_value = Obj(o)
 	}
 	return return_value
+}
+
+func (coll CollectionStruct) MongoCollection() mongo.Collection {
+	return *coll.Collection
+}
+
+func (coll CollectionStruct) Count(filter interface{}) (int64, error) {
+	return coll.Collection.CountDocuments(context.TODO(), filter)
 }
 
 func (coll CollectionStruct) Save(o interface{}) error {

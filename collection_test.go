@@ -469,3 +469,36 @@ func Test_update_1(t *testing.T) {
 	}
 
 }
+
+func Test_count_1(t *testing.T) {
+	type Test_count_1 struct {
+		BaseObject `bson:"inline"`
+		TestStr    string
+		Num        int
+	}
+
+	t1 := Test_count_1{
+		TestStr: "1",
+		Num:     0,
+	}
+	t2 := Test_count_1{
+		TestStr: "2",
+		Num:     2,
+	}
+	obj1 := Obj(&t1)
+	obj2 := Obj(&t2)
+	Coll(obj1).Drop()
+
+	err := Coll(obj1).Save(obj1)
+	if err != nil {
+		t.Error(err)
+	}
+	err = Coll(obj2).Save(obj2)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if c, _ := Coll(obj1).Count(primitive.M{}); c != 2 {
+		t.Error()
+	}
+}
