@@ -31,11 +31,6 @@ type Collection interface {
 func Coll(o interface{}) Collection {
 	obj := to_object(o)
 
-	client, err := mongo.Connect(context.TODO(), config.root_options)
-	if err != nil {
-		return nil
-	}
-
 	collection := CollectionStruct{}
 	collection.Collection = client.Database(config.connection_string.Database).Collection(GetCollectionName(obj))
 	return collection

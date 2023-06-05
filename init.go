@@ -19,6 +19,7 @@ type Config struct {
 }
 
 var config Config
+var client *mongo.Client
 
 func Init(c Config) error {
 	var err error
@@ -29,20 +30,22 @@ func Init(c Config) error {
 		return err
 	}
 	config.root_options = options.Client().ApplyURI(c.ConnectionString)
+
+	client, err = mongo.Connect(context.TODO(), config.root_options)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func CreateConnection() (context.Context, *mongo.Client, context.CancelFunc, error) {
+func CreateContext() (context.Context, context.CancelFunc, error) {
 	ctx, cancel := context.WithTimeout(config.root_context, 10*time.Second)
-	client, err := mongo.Connect(ctx, config.root_options)
-	if err != nil {
-		return nil, nil, cancel, err
-	}
-	return ctx, client, cancel, nil
+	return ctx, cancel, nil
 }
 
 func Ping() error {
-	ctx, client, cancel, err := CreateConnection()
+	ctx, cancel, err := CreateContext()
 	defer client.Disconnect(ctx)
 	defer cancel()
 	if err != nil {
