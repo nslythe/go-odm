@@ -26,7 +26,7 @@ type Collection interface {
 	Drop()
 	Delete(obj interface{}) error
 	Count(filter interface{}) (int64, error)
-	MongoCollection() mongo.Collection
+	MongoCollection() *mongo.Collection
 }
 
 func Coll(o interface{}) Collection {
@@ -80,8 +80,8 @@ func to_object(o interface{}) DataObject {
 	return return_value
 }
 
-func (coll CollectionStruct) MongoCollection() mongo.Collection {
-	return *coll.Collection
+func (coll CollectionStruct) MongoCollection() *mongo.Collection {
+	return coll.Collection
 }
 
 func (coll CollectionStruct) Count(filter interface{}) (int64, error) {
