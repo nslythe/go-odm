@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type CollectionStruct struct {
@@ -27,6 +28,7 @@ type Collection interface {
 	Delete(obj interface{}) error
 	Count(filter interface{}) (int64, error)
 	MongoCollection() *mongo.Collection
+	CreateIndex(name string, model mongo.IndexModel) error
 }
 
 func Coll(o interface{}) Collection {
@@ -86,6 +88,16 @@ func (coll CollectionStruct) MongoCollection() *mongo.Collection {
 
 func (coll CollectionStruct) Count(filter interface{}) (int64, error) {
 	return coll.Collection.CountDocuments(context.TODO(), filter)
+}
+
+func (coll CollectionStruct) CreateIndex(name string, model mongo.IndexModel) error {
+	tempo_name := name
+	index_model := mongo.IndexModel{
+		Keys:    model.Keys,
+		Options: &options.IndexOptions{Name: &tempo_name},
+	}
+	name, err := coll.Collection.Indexes().CreateOne(context.TODO(), index_model)
+	return err
 }
 
 func (coll CollectionStruct) Save(o interface{}) error {
