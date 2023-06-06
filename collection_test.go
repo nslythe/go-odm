@@ -467,7 +467,6 @@ func Test_update_1(t *testing.T) {
 	if t2.BaseObject.Id != t1.BaseObject.Id {
 		t.Error()
 	}
-
 }
 
 func Test_count_1(t *testing.T) {
@@ -499,6 +498,64 @@ func Test_count_1(t *testing.T) {
 	}
 
 	if c, _ := Coll(obj1).Count(primitive.M{}); c != 2 {
+		t.Error()
+	}
+}
+
+func Test_update_all_1(t *testing.T) {
+	type Test_update_all_1 struct {
+		BaseObject `bson:"inline"`
+		TestStr    string
+		Num        int
+	}
+
+	t1 := Test_update_all_1{
+		TestStr: "1",
+		Num:     0,
+	}
+	t2 := Test_update_all_1{
+		TestStr: "1",
+		Num:     2,
+	}
+	obj1 := Obj(&t1)
+	obj2 := Obj(&t2)
+	Coll(obj1).Drop()
+
+	err := Coll(obj1).Save(obj1)
+	if err != nil {
+		t.Error(err)
+	}
+	err = Coll(obj2).Save(obj2)
+	if err != nil {
+		t.Error(err)
+	}
+
+	t3 := Test_update_all_1{
+		TestStr: "1",
+		Num:     3,
+	}
+
+	n, err := Coll(obj2).UpdateAll(&t3, primitive.M{"teststr": "1"})
+	if err != nil {
+		t.Error(err)
+	}
+	if n != 2 {
+		t.Error()
+	}
+
+	err = Coll(obj2).Load(obj2)
+	if err != nil {
+		t.Error(err)
+	}
+	if t2.Num != 3 {
+		t.Error()
+	}
+
+	err = Coll(obj1).Load(obj1)
+	if err != nil {
+		t.Error(err)
+	}
+	if t1.Num != 3 {
 		t.Error()
 	}
 }

@@ -19,13 +19,14 @@ type CollectionStruct struct {
 type Collection interface {
 	Save(obj interface{}) error
 	Update(obj interface{}, filter interface{}) error
+	UpdateAll(obj interface{}, filter interface{}) (int, error)
 	Load(obj interface{}) error
 	Find(obj interface{}, filter interface{}) error
 	FindSpecificType(obj interface{}, filter interface{}) error
 	Drop()
 	Delete(obj interface{}) error
-	MongoCollection() mongo.Collection
 	Count(filter interface{}) (int64, error)
+	MongoCollection() mongo.Collection
 }
 
 func Coll(o interface{}) Collection {
@@ -146,7 +147,29 @@ func (coll CollectionStruct) Update(o interface{}, filter interface{}) error {
 	result.Decode(obj.obj_interface)
 
 	return nil
+}
 
+func (coll CollectionStruct) UpdateAll(o interface{}, filter interface{}) (int, error) {
+	obj := to_object(o)
+
+	err := coll.validate_object(obj)
+	if err != nil {
+		return 0, err
+	}
+
+	if err != nil {
+		return 0, err
+	}
+
+	obj.SetTypeName()
+	obj.SetUpdateTime()
+
+	result, err := coll.Collection.UpdateMany(context.TODO(), filter, primitive.M{"$set": obj.Interface()})
+	if err != nil {
+		return 0, err
+	}
+
+	return int(result.ModifiedCount), nil
 }
 
 func (coll CollectionStruct) Load(o interface{}) error {
