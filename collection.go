@@ -28,7 +28,7 @@ type Collection interface {
 	Delete(obj interface{}) error
 	Count(filter interface{}) (int64, error)
 	MongoCollection() *mongo.Collection
-	CreateIndex(name string, model mongo.IndexModel) error
+	CreateIndex(name string, keys interface{}) error
 }
 
 func Coll(o interface{}) Collection {
@@ -90,10 +90,10 @@ func (coll CollectionStruct) Count(filter interface{}) (int64, error) {
 	return coll.Collection.CountDocuments(context.TODO(), filter)
 }
 
-func (coll CollectionStruct) CreateIndex(name string, model mongo.IndexModel) error {
+func (coll CollectionStruct) CreateIndex(name string, keys interface{}) error {
 	tempo_name := name
 	index_model := mongo.IndexModel{
-		Keys:    model.Keys,
+		Keys:    keys,
 		Options: &options.IndexOptions{Name: &tempo_name},
 	}
 	name, err := coll.Collection.Indexes().CreateOne(context.TODO(), index_model)
