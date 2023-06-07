@@ -559,3 +559,20 @@ func Test_update_all_1(t *testing.T) {
 		t.Error()
 	}
 }
+
+func Test_coll_string_1(t *testing.T) {
+	type Test_coll_string_1 struct {
+		BaseObject `bson:"inline"`
+		TestStr    string
+		Num        int
+	}
+
+	t1 := Test_coll_string_1{
+		TestStr: "1",
+		Num:     0,
+	}
+	err := Coll("test").Save(&t1)
+	if err != nil {
+		t.Error(err)
+	}
+}

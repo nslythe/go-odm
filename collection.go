@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"unicode"
 
@@ -32,10 +33,16 @@ type Collection interface {
 }
 
 func Coll(o interface{}) Collection {
-	obj := to_object(o)
+	var collection_name string
+	if reflect.TypeOf(o).Kind() == reflect.String {
+		collection_name = o.(string)
+	} else {
+		obj := to_object(o)
+		collection_name = GetCollectionName(obj)
+	}
 
 	collection := CollectionStruct{}
-	collection.Collection = client.Database(config.connection_string.Database).Collection(GetCollectionName(obj))
+	collection.Collection = client.Database(config.connection_string.Database).Collection(collection_name)
 	return collection
 }
 
